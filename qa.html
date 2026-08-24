@@ -1,0 +1,1693 @@
+<!DOCTYPE html> 
+<html lang="th">
+<head> 
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>Chat App</title> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style> 
+    
+    :root {
+        --body-bg: #e5e7eb;                                         
+        --header-bg: #9A2333;                                   
+        --chat-box-bg: transparent;                                 
+        --footer-bg: white;                                     
+        --input-bg: white;                                  
+        --input-text: #000000;                              
+        --input-border: #ccc;                               
+        --bot-bg: #ccc;                                         
+        --bot-text: #333;                                       
+        --toggle-btn-bg: rgba(255, 255, 255, 0.2);                                
+        --toggle-btn-text: white;                                   
+        
+        
+        --modal-bg: white;
+        --modal-text: #333;
+        --menu-item-hover: #f0f0f5;
+        --btn-close-bg: #e0e0e0;
+        --btn-close-text: #333;
+
+        --bg-img-opacity: 0.05;                                     
+    }
+    
+    [data-theme="dark"] {
+        --body-bg: #121212ed;                                     
+        --header-bg: #343232;                                     
+        --chat-box-bg: transparent;                                   
+        --footer-bg: #343232;                                       
+        --input-bg: #2d2d2d;                                    
+        --input-text: #ffffff;                                  
+        --input-border: #444;                                     
+        --bot-bg: #2d2d2d;                                        
+        --bot-text: #e0e0e0;                                      
+        --toggle-btn-bg: #9A2333;                                   
+        --toggle-btn-text: white;                                   
+        
+        
+        --modal-bg: #1e1e1e;
+        --modal-text: #ffffff;
+        --menu-item-hover: #2d2d2d;
+        --btn-close-bg: #3a3a3c;
+        --btn-close-text: #ffffff;
+        
+        
+        --bg-img-opacity: 0.10;
+    }
+
+    body {              
+        margin: 0;              
+        font-family: Arial, sans-serif;     
+        background-color: var(--body-bg);     
+        display: flex;              
+        flex-direction: column;         
+        height: 100vh;          
+        position: relative;     
+        overflow: hidden;         
+        overscroll-behavior: none; 
+        transition: background-color 0.3s; 
+    }
+
+    
+    body::before {
+        content: "";            
+        position: absolute;     
+        top: 0;                 
+        left: 0;                
+        width: 100%;            
+        height: 100%;           
+        background-image: url("/static/Ta/BG.png"); 
+        background-size: cover; 
+        background-position: center; 
+        background-repeat: no-repeat; 
+        opacity: var(--bg-img-opacity); 
+        pointer-events: none;   
+        z-index: 0;             
+        transition: opacity 0.3s ease; 
+    }
+
+    header {                    
+        background: var(--header-bg);       
+        color: white;               
+        padding: 15px 15px;             
+        display: flex;              
+        justify-content: flex-start;    
+        align-items: center;            
+        font-size: 16px;                
+        font-weight: bold;          
+        position: sticky;         
+        top: 0;                   
+        z-index: 30;                
+        transition: background 0.3s; 
+    }
+
+    
+    .header-controls {
+        position:absolute;           
+        top: 6px;                   
+        right: 10px;                
+        display: flex;
+        gap: 8px;                   
+        z-index: 1000;              
+    }
+
+    
+    .header-controls button {
+        background: var(--toggle-btn-bg); 
+        color: var(--toggle-btn-text); 
+        border: 1px solid rgba(255, 255, 255, 0.2); 
+        padding: 10px 12px;         
+        border-radius: 20px;        
+        cursor: pointer;            
+        font-size: 13px;            
+        transition: all 0.3s ease;  
+    }
+
+    .header-controls button:hover {
+        background: rgba(255, 255, 255, 0.4); 
+    }
+
+    [data-theme="dark"] .header-controls button:hover {
+        background: #73222d;        
+    }
+
+    #menuBtn {              
+        background: #912c39ef;      
+        color: white;               
+        border: none;               
+        padding: 5px 12px;          
+        border-radius: 15px;            
+        cursor: pointer;                
+        font-size: 14px;                
+        font-weight: bold;              
+        transition: background 0.2s;    
+    }
+    
+    #menuBtn:hover {                
+        background: #73222d;        
+    }
+
+    .chat {                     
+        flex: 1;                    
+        overflow-y: auto;           
+        padding: 15px;              
+        display: flex;              
+        flex-direction: column;             
+        gap: 15px;              
+        background-color: var(--chat-box-bg); 
+        position: relative;         
+        z-index: 1;                 
+    }
+    
+    
+    .chat-row {
+        display: flex;              
+        align-items: flex-end; 
+        gap: 8px;                   
+        max-width: 85%;             
+    }
+
+    
+    .chat-row.user-row {
+        align-self: flex-end;       
+        flex-direction: row-reverse; 
+    }
+
+    
+    .chat-row.bot-row {
+        align-self: flex-start;     
+    }
+
+    
+    .profile-avatar {
+        width: 35px;                
+        height: 35px;               
+        border-radius: 50%;         
+        object-fit: cover;          
+        flex-shrink: 0; 
+        border: 1px solid rgba(0,0,0,0.1); 
+    }
+
+    
+    .message-wrapper {
+        display: flex;              
+        flex-direction: column;     
+        min-width: 0;
+        max-width: 100%;
+    }
+    .user-row .message-wrapper {
+        align-items: flex-end; 
+    }
+    .bot-row .message-wrapper {
+        align-items: flex-start; 
+    }
+
+.message {
+    padding: 10px 14px;
+    border-radius: 20px;
+    line-height: 1.4;
+    white-space: pre-wrap;              
+    font-family:'Noto Sans Thai',sans-serif; 
+    word-wrap: break-word;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+    .user {                     
+        background: #73222d;        
+        color: white;               
+        border-bottom-right-radius: 4px;    
+    }
+
+    .bot {                  
+        background: var(--bot-bg);          
+        color: var(--bot-text);                 
+        border-bottom-left-radius: 4px;     
+        transition: background 0.3s, color 0.3s; 
+    }
+
+    
+    .chat-time {
+        font-size: 10px;            
+        color: #8e8e93;             
+        margin-top: 4px;            
+        padding: 0 4px;             
+        user-select: none;          
+    }
+
+    footer {                    
+        display: flex;              
+        flex-wrap: wrap;            
+        align-items: center;        
+        padding: 10px;              
+        background: var(--footer-bg);           
+        border-top: 1px solid var(--input-border);          
+        position: sticky;         
+        bottom: 0;                
+        z-index: 30;                
+        transition: background 0.3s, border-color 0.3s; 
+        gap: 10px;
+    }
+
+    .footer-inputs {
+        display: flex;
+        flex: 1;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .footer-inputs input {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    input {                     
+        padding: 10px;              
+        border-radius: 10px;            
+        border: 1px solid var(--input-border);              
+        outline: none;              
+        background-color: var(--input-bg); 
+        color: var(--input-text);   
+        transition: background-color 0.3s, color 0.3s, border-color 0.3s; 
+    }
+
+    footer > button {                   
+        margin-right: 10px;         
+        margin-left: 10px;          
+        padding: 10px 30px;             
+        border: none;               
+        border-radius: 50px;            
+        background: #912c39ef;          
+        color: white;               
+        cursor: pointer;                
+    }
+
+    .loading {                  
+        font-size: 13px;                
+        color: gray;                
+        margin-left: 45px;          
+    }
+
+    
+    .menu-overlay {
+        position: fixed;            
+        top: 0;                     
+        left: 0;                    
+        width: 100%;                
+        height: 100%;               
+        background: rgba(0, 0, 0, 0.4); 
+        backdrop-filter: blur(3px); 
+        display: flex;              
+        justify-content: center;    
+        align-items: center;        
+        z-index: 2000;              
+        opacity: 0;                 
+        pointer-events: none;       
+        transition: opacity 0.2s ease; 
+    }
+    
+    .menu-overlay.active {
+        opacity: 1;                 
+        pointer-events: auto;       
+    }
+
+    .menu-modal {
+        background: var(--modal-bg); 
+        color: var(--modal-text);   
+        padding: 20px;              
+        border-radius: 16px;        
+        width: 85%;                 
+        max-width: 280px;           
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+        text-align: center;         
+        transform: scale(0.9);      
+        transition: transform 0.2s ease; 
+    }
+
+    .menu-overlay.active .menu-modal {
+        transform: scale(1);        
+    }
+
+    .menu-modal h3 {
+        margin: 0 0 15px 0;         
+        font-size: 16px;            
+        color: #8e8e93;             
+        font-weight: normal;        
+        text-transform: uppercase;  
+        letter-spacing: 0.5px;      
+    }
+
+    .menu-list {
+        display: flex;              
+        flex-direction: column;     
+        border-radius: 12px;        
+        overflow: hidden;           
+        margin-bottom: 12px;        
+    }
+
+    .menu-item {
+        background: var(--body-bg); 
+        color: var(--modal-text);   
+        padding: 14px;              
+        font-size: 15px;            
+        font-weight: bold;          
+        border: none;                                   
+        border-bottom: 1px solid var(--input-border);   
+        cursor: pointer;            
+        text-align: center;         
+        transition: background 0.2s; 
+    }
+
+    .menu-item:last-child {
+        border-bottom: none;        
+    }
+
+    .menu-item:hover {
+        background: var(--menu-item-hover); 
+    }
+
+    .menu-item.action-new {
+        color: #de2a2a;             
+    }
+
+    .menu-btn-close {
+        width: 100%;                
+        padding: 12px;              
+        border: none;               
+        border-radius: 10px;        
+        font-size: 14px;            
+        font-weight: bold;          
+        background: var(--btn-close-bg); 
+        color: var(--btn-close-text); 
+        cursor: pointer;            
+    }
+
+    
+    .qr-modal {
+        display: none;              
+        position: fixed;            
+        left: 0;                    
+        top: 0;                     
+        width: 100%;                
+        height: 100%;               
+        background: rgba(0,0,0,.55); 
+        justify-content: center;    
+        align-items: center;        
+        z-index: 9999;              
+    }
+    
+    .qr-box {
+        position: relative;         
+        background: #fff;           
+        color: #333333;             
+        padding: 25px;              
+        border-radius: 12px;        
+        box-shadow: 0 8px 25px rgba(0,0,0,.3); 
+        text-align: center;         
+    }
+
+    .qr-modal {
+        padding: 16px;
+        background: rgba(31, 14, 19, 0.58);
+        backdrop-filter: blur(8px);
+    }
+
+    .qr-box {
+        width: min(92vw, 390px);
+        padding: 28px 24px 24px;
+        border: 1px solid rgba(143, 41, 58, 0.12);
+        border-radius: 18px;
+        background: var(--modal-bg);
+        color: var(--modal-text);
+        box-shadow: 0 24px 70px rgba(35, 14, 19, 0.3);
+    }
+
+    .qr-kicker {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+    }
+
+    .qr-box h3 {
+        margin: 0;
+        color: var(--modal-text);
+        font-family: "Noto Sans Thai", Tahoma, sans-serif;
+        font-size: 20px;
+    }
+
+    .qr-box .qr-description {
+        margin: 6px 0 18px;
+        color: var(--muted);
+        font-family: "Noto Sans Thai", Tahoma, sans-serif;
+        font-size: 12px;
+    }
+
+    #qrcode {
+        width: 270px;
+        max-width: 100%;
+        margin: 0 auto 14px;
+        padding: 10px;
+        border: 1px solid var(--input-border);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 6px 18px rgba(50, 30, 30, 0.08);
+    }
+
+    #qrcode canvas,
+    #qrcode img {
+        display: block;
+        width: 250px;
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto;
+    }
+
+    .qr-box .qr-url {
+        margin: 0 auto 16px;
+        padding: 8px 10px;
+        overflow: hidden;
+        border-radius: 8px;
+        background: var(--body-bg);
+        color: var(--muted);
+        font-size: 11px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .download-qr-btn {
+        width: 100%;
+        min-height: 44px;
+        border: none;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+        font-family: "Noto Sans Thai", Tahoma, sans-serif;
+        font-size: 13px;
+        font-weight: bold;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+    .download-qr-btn:hover {
+        background: var(--accent-deep);
+        transform: translateY(-1px);
+    }
+
+    [data-theme="dark"] .qr-box {
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .qr-box h3 {
+        margin: 0 0 10px 0;         
+        font-size: 18px;
+    }
+
+    .qr-box p {
+        margin: 5px 0 15px 0;       
+        font-size: 14px;
+        color: #555555;             
+        word-break: break-all;      
+    }
+    
+    .close-btn {
+        position: absolute;         
+        top: 8px;                   
+        right: 8px;                 
+        width: 35px;                
+        height: 35px;               
+        border-radius: 50%;         
+        border: none;               
+        background: #dc3545;        
+        color: white;               
+        font-size: 18px;            
+        cursor: pointer;            
+        display: flex;              
+        justify-content: center;    
+        align-items: center;        
+    }
+    
+    .close-btn:hover {
+        background: #bb2d3b;        
+    }
+    
+    #qrcode {
+        margin: 15px auto;          
+        display: block;             
+    }   
+    
+    #qrcode img {
+        margin: 0 auto;
+    }
+
+    .welcome-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    
+         
+        background: linear-gradient(135deg,rgba(253, 251, 251, 0.7),rgba(234, 214, 216,0.7)),linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4)),url("/static/Ta/BG.png");
+        background-size: cover;     
+        background-position: center;    
+        background-repeat: no-repeat;   
+        background-blend-mode: multiply; 
+    
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    .welcome-box{
+        background: white;
+        padding: 40px 30px;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        text-align: center;
+        max-width: 350px;
+        width: 85%;
+    }
+    
+    .welcome-logo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 0 auto 15px auto;
+        display: block;
+        border: 2px solid rgba(0,0,0,0.1);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .welcome-box h2 {
+        margin: 0 0 10px 0;
+        color: #333;
+        font-size: 24px;
+    }
+
+    .welcome-box p {
+        margin: 0 0 25px 0;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .start-btn{
+        background: #912c39ef;
+        color: white;
+        border: none;
+        padding: 12px 35px;
+        font-size: 16px;
+        border-radius: 25px;
+        font-weight: bold;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+    }
+
+    .start-btn:hover {
+        background: #73222d;
+    }
+
+    .welcome-container.hidden{
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    /* Refined chat surface */
+    :root {
+        --body-bg: #f3f0ed;
+        --header-bg: #6f1d2c;
+        --footer-bg: rgba(255, 255, 255, 0.92);
+        --input-bg: #fff;
+        --input-border: #ded6d0;
+        --bot-bg: #fff;
+        --bot-text: #302a29;
+        --accent: #8f293a;
+        --accent-deep: #641827;
+        --muted: #857875;
+    }
+
+    [data-theme="dark"] {
+        --body-bg: #151719;
+        --header-bg: #202326;
+        --footer-bg: rgba(29, 32, 35, 0.96);
+        --input-bg: #262a2e;
+        --input-border: #42484e;
+        --bot-bg: #24282c;
+        --bot-text: #e6e8ea;
+        --accent: #c45b68;
+        --accent-deep: #a94452;
+        --muted: #adb3b8;
+        --modal-bg: #202428;
+        --modal-text: #e6e8ea;
+        --menu-item-hover: #2c3136;
+        --btn-close-bg: #2c3136;
+        --btn-close-text: #e6e8ea;
+        --bg-img-opacity: 0.04;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: "Noto Sans Thai", Tahoma, sans-serif;
+        background: var(--body-bg);
+    }
+
+    body::before {
+        opacity: 0.08;
+        filter: saturate(0.7);
+    }
+
+    header {
+        min-height: 58px;
+        padding: 7px clamp(12px, 2vw, 24px);
+        background: linear-gradient(105deg, var(--header-bg), #9a3143);
+        box-shadow: 0 5px 18px rgba(73, 19, 29, 0.18);
+    }
+
+    .brand-lockup {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        letter-spacing: 0.4px;
+    }
+
+    .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 13px;
+        letter-spacing: 0;
+    }
+
+    .brand-lockup strong,
+    .brand-lockup small { display: block; }
+
+    .brand-lockup strong { font-size: 15px; }
+
+    .brand-lockup small {
+        margin-top: 2px;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 11px;
+        font-weight: normal;
+    }
+
+    .status-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        margin-right: 5px;
+        border-radius: 50%;
+        background: #83d39c;
+        box-shadow: 0 0 0 3px rgba(131, 211, 156, 0.14);
+    }
+
+    .header-controls { top: 9px; right: clamp(8px, 2vw, 24px); }
+
+    .header-controls button {
+        position: relative;
+        width: 48px;
+        height: 40px;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        font-size: 0;
+        font-weight: bold;
+    }
+
+    .header-controls button::before {
+        content: "☾";
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        margin: 4px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        font-size: 20px;
+        line-height: 1;
+        transition: transform 0.25s, background 0.25s, color 0.25s;
+    }
+
+    [data-theme="dark"] .header-controls button::before {
+        content: "☀";
+        transform: translateX(8px);
+        background: #f6c453;
+        color: #5a3b13;
+    }
+
+    .chat {
+        width: 100%;
+        max-width: 100vw;
+        align-self: center;
+        padding: 28px clamp(12px, 2vw, 28px) 36px;
+        gap: 18px;
+        background:
+            radial-gradient(circle at 18% 12%, rgba(143, 41, 58, 0.08), transparent 28%),
+            radial-gradient(circle at 84% 76%, rgba(204, 155, 117, 0.09), transparent 26%);
+        scrollbar-color: rgba(111, 29, 44, 0.35) transparent;
+        scrollbar-width: thin;
+    }
+
+    .chat:empty {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .chat:empty::before {
+        content: "พร้อมช่วยวิเคราะห์ปัญหาเครื่องจักร";
+        display: block;
+        max-width: 390px;
+        color: var(--accent-deep);
+        font-size: clamp(18px, 3vw, 24px);
+        font-weight: bold;
+        letter-spacing: 0;
+    }
+
+    .chat:empty::after {
+        content: "พิมพ์คำถามเกี่ยวกับ Alarm, วิธีตรวจสอบ หรือคู่มือการซ่อมได้เลย";
+        display: block;
+        max-width: 360px;
+        margin-top: -8px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .chat-row { max-width: min(78%, 700px); gap: 10px; }
+
+    .profile-avatar {
+        width: 32px;
+        height: 32px;
+        border: 2px solid var(--body-bg);
+        box-shadow: 0 2px 8px rgba(49, 29, 25, 0.14);
+    }
+
+    .message {
+        max-width: 100%;
+        padding: 12px 16px;
+        border-radius: 17px;
+        line-height: 1.6;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+        box-shadow: 0 4px 14px rgba(66, 40, 35, 0.08);
+        animation: message-in 0.24s ease-out both;
+    }
+
+    @keyframes message-in {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .user {
+        background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+        border-bottom-right-radius: 5px;
+        box-shadow: 0 5px 14px rgba(111, 29, 44, 0.18);
+    }
+
+    .bot {
+        border: 1px solid rgba(111, 29, 44, 0.1);
+        border-bottom-left-radius: 5px;
+    }
+
+    .user-row .chat-time { padding-right: 2px; }
+    .bot-row .chat-time { padding-left: 2px; }
+
+    .chat-time { color: var(--muted); font-size: 10px; }
+
+    footer {
+        width: 100%;
+        max-width: 100vw;
+        align-self: stretch;
+        margin: 0 auto;
+        padding: 8px clamp(12px, 2vw, 24px) 10px;
+        gap: 9px;
+        background: var(--footer-bg);
+        border-top: 1px solid var(--input-border);
+        backdrop-filter: blur(14px);
+    }
+
+    .footer-inputs input {
+        min-height: 40px;
+        padding: 9px 13px;
+        border-radius: 12px;
+        font-size: 14px;
+        box-shadow: inset 0 1px 2px rgba(50, 30, 30, 0.04);
+    }
+
+    .footer-inputs {
+        padding: 2px;
+        border: 1px solid var(--input-border);
+        border-radius: 14px;
+        background: var(--input-bg);
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .footer-inputs:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(143, 41, 58, 0.11);
+    }
+
+    .footer-inputs input { border: none; box-shadow: none; }
+    .footer-inputs input:focus { box-shadow: none; }
+
+    input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(143, 41, 58, 0.13);
+    }
+
+    footer > button {
+        min-height: 40px;
+        margin: 0;
+        padding: 8px 18px;
+        border-radius: 12px;
+        background: var(--accent);
+        font-weight: bold;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+    footer > button:hover { background: var(--accent-deep); transform: translateY(-1px); }
+
+    footer > button:focus-visible {
+        outline: 3px solid rgba(196, 91, 104, 0.35);
+        outline-offset: 2px;
+    }
+
+    #menuBtn {
+        width: 40px;
+        padding: 7px;
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: #fff;
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    #menuBtn:hover { background: var(--accent-deep); }
+
+    #sendBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-width: 76px;
+        letter-spacing: 0.2px;
+    }
+
+    #sendBtn b {
+        font-size: 15px;
+        font-weight: normal;
+        transform: translateY(-1px);
+    }
+
+    .loading { margin-left: 43px; color: var(--muted); }
+
+    .menu-modal, .qr-box, .welcome-box { border-radius: 14px; }
+    .menu-modal { box-shadow: 0 20px 50px rgba(30, 12, 17, 0.25); }
+    .menu-item { padding: 13px 14px; }
+    .start-btn { background: var(--accent); border-radius: 12px; }
+
+    .welcome-box {
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        padding: 42px 32px 32px;
+        box-shadow: 0 24px 60px rgba(46, 18, 25, 0.25);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(12px);
+    }
+
+    .welcome-kicker {
+        display: inline-block;
+        margin: 2px 0 12px;
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+    }
+
+    .welcome-box h2 { letter-spacing: 0.3px; }
+
+    .welcome-box p {
+        max-width: 285px;
+        margin-right: auto;
+        margin-left: auto;
+        line-height: 1.65;
+        color: #625754;
+    }
+
+    .welcome-logo {
+        width: 92px;
+        height: 92px;
+        margin-bottom: 18px;
+        border: 4px solid #fff;
+        box-shadow: 0 7px 18px rgba(73, 19, 29, 0.18), 0 0 0 1px rgba(143, 41, 58, 0.15);
+    }
+
+    .start-btn {
+        min-height: 48px;
+        box-shadow: 0 8px 18px rgba(111, 29, 44, 0.2);
+        transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+
+    .start-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 11px 22px rgba(111, 29, 44, 0.25);
+    }
+
+    [data-theme="dark"] .welcome-container {
+        background: linear-gradient(135deg, rgba(35, 20, 24, 0.88), rgba(82, 31, 43, 0.72)), url("/static/Ta/BG.png");
+        background-size: cover;
+        background-position: center;
+    }
+
+    [data-theme="dark"] .welcome-box {
+        background: rgba(38, 29, 32, 0.94);
+        border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    [data-theme="dark"] .welcome-box h2,
+    [data-theme="dark"] .welcome-box p { color: #f5eeee; }
+
+    [data-theme="dark"] .chat {
+        background:
+            radial-gradient(circle at 18% 12%, rgba(196, 91, 104, 0.035), transparent 28%),
+            radial-gradient(circle at 84% 76%, rgba(174, 183, 190, 0.025), transparent 26%);
+    }
+
+    [data-theme="dark"] .bot {
+        border-color: #3b4248;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+    }
+
+    [data-theme="dark"] .user {
+        background: #8f3544;
+    }
+
+    [data-theme="dark"] .chat-time { color: #9da5ab; }
+
+    [data-theme="dark"] .menu-overlay,
+    [data-theme="dark"] .qr-modal {
+        background: rgba(0, 0, 0, 0.68);
+    }
+
+    [data-theme="dark"] .header-controls button {
+        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    [data-theme="dark"] .qr-box .qr-url { color: #c1c7cc; }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    @media (max-width: 600px) {
+        header { min-height: 56px; padding: 6px 10px; }
+        .brand-lockup strong { font-size: 13px; }
+        .brand-lockup small { font-size: 10px; }
+        .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
+        .header-controls button { width: 42px; height: 36px; }
+        .header-controls button::before { width: 28px; height: 28px; margin: 3px; }
+        [data-theme="dark"] .header-controls button::before { transform: translateX(6px); }
+        .chat { padding-top: 20px; }
+        .chat-row { max-width: 91%; }
+        footer { padding: 7px 10px 9px; gap: 7px; }
+        footer > button { padding: 8px 13px; }
+        #menuBtn { width: 38px; }
+        #sendBtn { min-width: 64px; gap: 5px; padding-right: 11px; padding-left: 11px; }
+        .footer-inputs input { min-width: 0; }
+        .welcome-box { width: min(92%, 390px); padding: 34px 22px 24px; }
+        .welcome-box h2 { font-size: 21px; }
+        .welcome-logo { width: 82px; height: 82px; }
+    }
+
+    /* Command menu */
+    .menu-overlay {
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 82px clamp(14px, 4vw, 48px) 24px;
+        background: rgba(36, 18, 22, 0.38);
+        backdrop-filter: blur(8px);
+    }
+
+    .menu-modal {
+        width: min(100%, 350px);
+        max-width: none;
+        padding: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        background: var(--modal-bg);
+        border-radius: 18px;
+        text-align: left;
+        box-shadow: 0 22px 55px rgba(35, 14, 19, 0.28);
+        max-height: calc(100vh - 106px);
+        overflow-y: auto;
+        transform: translateY(-10px) scale(0.98);
+    }
+
+    .menu-overlay.active .menu-modal { transform: translateY(0) scale(1); }
+
+    .menu-modal h3 {
+        margin: 0 0 4px;
+        padding: 0 2px;
+        color: var(--modal-text);
+        font-size: 18px;
+        font-weight: bold;
+        letter-spacing: 0;
+        text-transform: none;
+    }
+
+    .menu-modal h3::after {
+        content: "จัดการการสนทนาและเครื่องมือ";
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: normal;
+    }
+
+    .menu-list {
+        gap: 6px;
+        margin: 17px 0 15px;
+        overflow: visible;
+    }
+
+    .menu-item {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 47px;
+        padding: 10px 13px;
+        border: 1px solid transparent;
+        border-radius: 11px;
+        background: transparent;
+        color: var(--modal-text);
+        font-size: 14px;
+        font-weight: 600;
+        text-align: left;
+        transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+
+    .menu-item[hidden] {
+        display: none;
+    }
+
+    .menu-item:hover,
+    .menu-item:focus-visible {
+        border-color: rgba(143, 41, 58, 0.14);
+        background: var(--menu-item-hover);
+        outline: none;
+        transform: translateX(2px);
+    }
+
+    .menu-item.action-new {
+        border-color: rgba(143, 41, 58, 0.14);
+        background: rgba(143, 41, 58, 0.08);
+        color: var(--accent);
+    }
+
+    .menu-btn-close {
+        min-height: 42px;
+        padding: 10px;
+        border: 1px solid var(--input-border);
+        border-radius: 10px;
+        background: transparent;
+        color: var(--muted);
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .menu-btn-close:hover {
+        background: var(--menu-item-hover);
+        color: var(--modal-text);
+    }
+
+    @media (max-width: 600px) {
+        .menu-overlay {
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 74px 12px 12px;
+        }
+
+        .menu-modal {
+            width: 100%;
+            padding: 20px 16px 16px;
+            margin-bottom: 0;
+            max-height: calc(100vh - 24px);
+            border-radius: 18px;
+            transform: translateY(10px) scale(0.98);
+        }
+
+        .menu-overlay.active .menu-modal { transform: translateY(0) scale(1); }
+    }
+
+    .swal2-popup.login-popup {
+        width: min(92vw, 390px);
+        padding: 28px 24px 22px;
+        border: 1px solid rgba(143, 41, 58, 0.12);
+        border-radius: 18px;
+        background: var(--modal-bg);
+        color: var(--modal-text);
+        box-shadow: 0 24px 70px rgba(35, 14, 19, 0.3);
+    }
+
+    .login-popup .swal2-title {
+        margin: 0 0 5px;
+        color: var(--modal-text);
+        font-family: "Noto Sans Thai", Tahoma, sans-serif;
+        font-size: 20px;
+    }
+
+    .login-popup .swal2-html-container {
+        margin: 0;
+    }
+
+    .login-popup .swal2-input {
+        width: 100%;
+        height: 45px;
+        margin: 10px 0 0;
+        padding: 10px 13px;
+        border: 1px solid var(--input-border);
+        border-radius: 11px;
+        background: var(--input-bg);
+        color: var(--input-text);
+        font-family: "Noto Sans Thai", Tahoma, sans-serif;
+        font-size: 14px;
+        box-shadow: none;
+    }
+
+    .login-popup .swal2-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(143, 41, 58, 0.13);
+    }
+
+    .login-popup .swal2-actions {
+        width: 100%;
+        gap: 8px;
+        margin-top: 20px;
+    }
+
+    .login-popup .swal2-confirm,
+    .login-popup .swal2-cancel {
+        min-height: 42px;
+        margin: 0;
+        border-radius: 10px;
+        font-family: "Noto Sans Thai", Tahoma, sans-serif;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .login-popup .swal2-confirm {
+        flex: 1;
+        background: var(--accent);
+    }
+
+    .login-popup .swal2-confirm:hover { background: var(--accent-deep); }
+
+    .login-popup .swal2-cancel {
+        flex: 0.65;
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--input-border);
+    }
+
+    .login-popup .swal2-cancel:hover {
+        background: var(--menu-item-hover);
+        color: var(--modal-text);
+    }
+
+</style> 
+</head> 
+
+<body> 
+    <div id="welcomePage" class="welcome-container"> 
+        <div class="welcome-box">
+            <img src="/static/Ta/PA.png" alt="Bot Logo" class="welcome-logo">
+            <span class="welcome-kicker">MAINTENANCE INTELLIGENCE</span>
+            <h2>MT ASSISTANT AI</h2>
+            <p>ผู้ช่วยอัจฉริยะสำหรับคู่มือซ่อมและวิเคราะห์ปัญหาเครื่องจักร</p>
+            <button class="start-btn" onclick="entetchat()">เข้าสู่หน้าแรก</button>
+        </div>
+    </div>
+
+<header> 
+    <div class="brand-lockup">
+        <span class="brand-mark">MT</span>
+        <div>
+            <strong>MT ASSISTANT AI</strong>
+            <small><span class="status-dot"></span>พร้อมให้คำปรึกษา</small>
+        </div>
+    </div>
+    <div class="header-controls">
+        <button id="themeToggleBtn" onclick="toggleTheme()" aria-label="เปิดโหมดกลางคืน" title="เปิดโหมดกลางคืน">🌙 DARK MODE</button>
+    </div>
+</header> 
+
+<div id="chat" class="chat"></div> 
+
+<footer> 
+    <button id="menuBtn" onclick="openMenu()" title="เมนูคำสั่ง" aria-label="เปิดเมนูคำสั่ง">+</button>
+    <div class="footer-inputs">
+        <input type="text" id="question" placeholder="พิมพ์คำถาม เช่น BROTHER TC-S2A NC Alarm 5567" onkeypress="if (event.key === 'Enter'){ ask() }">
+    </div>
+    <button id="sendBtn" onclick="ask()" title="ส่งข้อความ" aria-label="ส่งข้อความ"><span>ส่ง</span><b aria-hidden="true">➤</b></button>
+</footer>
+
+<input type="file" id="manualUploadInput" accept=".txt,.docx" multiple style="display:none" onchange="uploadManualFiles(event)">
+
+<div id="actionMenu" class="menu-overlay" onclick="closeMenu()">
+    <div class="menu-modal" onclick="event.stopPropagation()">
+        <h3>เมนูคำสั่ง</h3>
+        <div class="menu-list">
+            <button class="menu-item" onclick="handleMenuQR()">📱QR Code</button>
+            <button class="menu-item" id="uploadMenuBtn" onclick="checkLoginAndUpload()">📂อัปโหลดข้อมูลคู่มือ</button>
+            <button class="menu-item" id="logoutMenuBtn" onclick="logout()" hidden>ออกจากระบบ</button>
+            <button class="menu-item" onclick="goDashboard()">📊Dashboard</button>
+            <button class="menu-item action-new" onclick="handleNewChat()">💭New Chat</button>  
+            <button class="menu-item" onclick="goHome()">🏡กลับหน้าแรก</button>
+        </div>
+        <button class="menu-btn-close" onclick="closeMenu()">ปิด</button>
+    </div>
+</div>
+
+<div id="qrModel" class="qr-modal">
+    <div class="qr-box" onclick="event.stopPropagation()">
+        <button class="close-btn" onclick="closeQR()">&times;</button>
+        <span class="qr-kicker">QUICK ACCESS</span>
+        <h3>สแกนเพื่อเข้าสู่ระบบ</h3>
+        <p class="qr-description">ใช้กล้องโทรศัพท์สแกน QR Code เพื่อเปิดหน้าแชท</p>
+        <div id="qrcode"></div>
+        <p class="qr-url">http://27.254.143.93:5000/qa</p>
+        <button id="downloadQrBtn" class="download-qr-btn" onclick="downloadQR()">ดาวน์โหลด QR Code</button>
+    </div>
+</div>
+
+<script>
+    const chat = document.getElementById("chat");                                                 
+    
+    function entetchat(){
+    const welcomePage = document.getElementById("welcomePage");
+    welcomePage.classList.add("hidden");
+    } 
+    async function updateAuthMenu() {
+        try {
+            const response = await fetch("/api/upload-auth");
+            const data = await response.json();
+            const uploadButton = document.getElementById("uploadMenuBtn");
+            const logoutButton = document.getElementById("logoutMenuBtn");
+            uploadButton.textContent = data.authenticated ? "📂อัปโหลดข้อมูลคู่มือ (ล็อกอินแล้ว)" : "📂อัปโหลดข้อมูลคู่มือ";
+            logoutButton.hidden = !data.authenticated;
+        } catch (error) {
+            console.error("ไม่สามารถตรวจสอบสถานะล็อกอินได้", error);
+        }
+    }
+
+    async function checkLoginAndUpload() {
+        const authResponse = await fetch("/api/upload-auth");
+        const authData = await authResponse.json();
+        if (authData.authenticated) {
+            triggerManualUpload();
+            return;
+        }
+
+    const { value: formValues } = await Swal.fire({
+        title: 'เข้าสู่ระบบก่อนใช้งาน',
+        html: `
+            <input type="text" id="swal-input1" class="swal2-input" placeholder="Username">
+            <input type="password" id="swal-input2" class="swal2-input" placeholder="Password">
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'เข้าสู่ระบบ',
+        cancelButtonText: 'ยกเลิก',
+        customClass: {
+            popup: 'login-popup'
+        },
+        didOpen: () => {
+            document.querySelector('.swal2-popup').style.zIndex = '100000';
+            document.querySelector('.swal2-backdrop-show').style.zIndex = '99999';
+        },
+        preConfirm: () => {
+            return [
+                document.getElementById('swal-input1').value,
+                document.getElementById('swal-input2').value
+            ]
+        }
+    });
+
+    // ตรวจสอบข้อมูลเมื่อผู้ใช้กดปุ่มเข้าสู่ระบบ
+    if (formValues) {
+        let user = formValues[0];
+        let pass = formValues[1];
+
+        try {
+            const response = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: user, password: pass })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || "เข้าสู่ระบบไม่สำเร็จ");
+            }
+
+            await updateAuthMenu();
+            await Swal.fire({
+                icon: 'success',
+                title: 'เข้าสู่ระบบสำเร็จ',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            triggerManualUpload();
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'ผิดพลาด',
+                text: error.message
+            });
+        }
+    }
+    }
+
+    async function logout() {
+        await fetch("/api/logout", { method: "POST" });
+        await updateAuthMenu();
+        closeMenu();
+        Swal.fire({
+            icon: "success",
+            title: "ออกจากระบบแล้ว",
+            showConfirmButton: false,
+            timer: 1200
+        });
+    }
+
+    function toggleTheme() {                                                                                                                
+        const currentTheme = document.documentElement.getAttribute("data-theme");       
+        const btn = document.getElementById("themeToggleBtn");                          
+        if (currentTheme === "dark") {                                                                                      
+            document.documentElement.setAttribute("data-theme", "light");               
+            btn.innerText = "🌙 DARK";                                                                                      
+            btn.setAttribute("aria-label", "เปิดโหมดกลางคืน");
+            btn.title = "เปิดโหมดกลางคืน";
+            localStorage.setItem("appTheme", "light");                                      
+        } else {                                                                                                                                
+            document.documentElement.setAttribute("data-theme", "dark");                
+            btn.innerText = "☀️ LIGHT";                                                     
+            btn.setAttribute("aria-label", "เปิดโหมดกลางวัน");
+            btn.title = "เปิดโหมดกลางวัน";
+            localStorage.setItem("appTheme", "dark");                                       
+        }
+    }
+
+    function loadSavedTheme() {                                                                                             
+        const savedTheme = localStorage.getItem("appTheme");                            
+        const btn = document.getElementById("themeToggleBtn");                          
+        if (savedTheme === "dark") {                                                                                        
+            document.documentElement.setAttribute("data-theme", "dark");                
+            btn.innerText = "☀️ LIGHT";                                                     
+            btn.setAttribute("aria-label", "เปิดโหมดกลางวัน");
+            btn.title = "เปิดโหมดกลางวัน";
+        }
+    }
+
+    function goHome(){
+        if(confirm("กลับไปหน้าแรกหรือไม่")){
+            closeMenu();
+            document.getElementById("welcomePage").classList.remove("hidden")
+            document.getElementById("question").value = "";
+        }
+    }
+
+    function goDashboard(){
+        closeMenu();
+        window.location.href = "/dashboard";
+    }
+
+    function savechat() {                                                                   
+        localStorage.setItem("chathistory", chat.innerHTML);                            
+    }
+
+    function loadchat(){                                                                
+        const saved = localStorage.getItem("chathistory");                              
+        if(saved){                                                                          
+            chat.innerHTML = saved;                                                         
+        }
+    }
+
+    
+    function openMenu() {
+        document.getElementById("actionMenu").classList.add("active"); 
+    }
+
+    
+    function closeMenu() {
+        document.getElementById("actionMenu").classList.remove("active"); 
+    }
+
+    
+    function handleMenuQR() {
+        closeMenu(); 
+        openQR();    
+    }
+
+    function triggerManualUpload() {
+        closeMenu();
+        document.getElementById("manualUploadInput").click();
+    }
+
+    async function waitForUploadCompletion(maxAttempts = 120, intervalMs = 1000) {
+        for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+            const response = await fetch("/upload-status");
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "ไม่สามารถตรวจสอบสถานะการอัปเดตฐานความรู้ได้");
+            }
+
+            if (data.state === "ready") {
+                return data;
+            }
+
+            if (data.state === "error") {
+                throw new Error(data.message || "อัปเดตฐานความรู้ไม่สำเร็จ");
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        }
+
+        throw new Error("การอัปเดตฐานความรู้ใช้เวลานานเกินกำหนด กรุณาลองตรวจสอบอีกครั้ง");
+    }
+
+    async function uploadManualFiles(event) {
+        const files = event.target.files;
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        const formData = new FormData();
+        for (const file of files) {
+            formData.append("files", file);
+        }
+
+        addmessage("กำลังอัปโหลดไฟล์และอัปเดตฐานความรู้...", "bot");
+
+        try {
+            const response = await fetch("/upload-manuals", {
+                method: "POST",
+                body: formData,
+            });
+            const data = await response.json();
+
+            if (response.status === 401) {
+                await updateAuthMenu();
+                throw new Error("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+            }
+
+            if (!response.ok) {
+                throw new Error(data.message || "อัปโหลดไม่สำเร็จ");
+            }
+
+            addmessage(data.message || "รับไฟล์แล้ว กำลังอัปเดตฐานความรู้", "bot");
+
+            const finalStatus = await waitForUploadCompletion();
+
+            const savedCount = Array.isArray(finalStatus.saved_files) ? finalStatus.saved_files.length : 0;
+            const skippedCount = Array.isArray(finalStatus.skipped_files) ? finalStatus.skipped_files.length : 0;
+            addmessage(
+                `อัปโหลดสำเร็จ ${savedCount} ไฟล์${skippedCount ? ` (ข้าม ${skippedCount} ไฟล์)` : ""} พร้อมใช้งานสำหรับการถามตอบแล้ว`,
+                "bot"
+            );
+        } catch (error) {
+            addmessage(`อัปโหลดไม่สำเร็จ: ${error.message}`, "bot");
+        } finally {
+            event.target.value = "";
+        }
+    }
+
+    
+    function handleNewChat() {
+        if(confirm("เริ่มการสนทนาใหม่และล้างหน้าจอแชทปัจจุบัน?")){ 
+            chat.innerHTML = "";            
+            localStorage.removeItem("chathistory"); 
+            closeMenu(); 
+        }
+    }
+
+    
+    function openQR(){
+        document.getElementById("qrModel").style.display = "flex"; 
+        
+        const qr = document.getElementById("qrcode");
+        qr.innerHTML = ""; 
+
+        new QRCode(qr, {
+            text: "http://27.254.143.93:5000/qa", 
+            width: 250,height: 250 });
+    }
+
+    function downloadQR() {
+        const qr = document.getElementById("qrcode");
+        const canvas = qr.querySelector("canvas");
+        const image = qr.querySelector("img");
+        let imageUrl = "";
+
+        if (canvas) {
+            imageUrl = canvas.toDataURL("image/png");
+        } else if (image) {
+            imageUrl = image.src;
+        }
+
+        if (!imageUrl) {
+            return;
+        }
+
+        const link = document.createElement("a");
+        link.href = imageUrl;
+        link.download = "mt-assistant-qr-code.png";
+        link.click();
+    }
+   
+    
+    function closeQR(){
+        document.getElementById("qrModel").style.display = "none"; 
+    }
+   
+    
+    window.onclick = function(e){
+        const modal = document.getElementById("qrModel");
+
+        if (e.target === modal) {
+            closeQR();
+        }
+    }
+
+    
+    function addmessage(text, type){ 
+        const row = document.createElement("div"); 
+        row.classList.add("chat-row", type + "-row"); 
+
+        const avatar = document.createElement("img"); 
+        avatar.classList.add("profile-avatar"); 
+        
+        
+         if(type === "user") { 
+            avatar.src = "/static/Ta/US.png"; 
+            avatar.alt = "User"; 
+        } else { 
+            avatar.src = "/static/Ta/BT.png"; 
+            avatar.alt = "Bot Profile"; 
+        }  
+    
+        const wrapper = document.createElement("div"); 
+        wrapper.classList.add("message-wrapper"); 
+
+        const msg = document.createElement("div"); 
+        msg.classList.add("message", type); 
+        msg.innerText = text;                 
+
+        const now = new Date(); 
+        
+        const dateString = now.toLocaleDateString('th-TH', { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+        });
+
+        const timeString = now.toLocaleTimeString('th-TH', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+        });
+
+        const timeContainer = document.createElement("div"); 
+        timeContainer.classList.add("chat-time"); 
+        timeContainer.innerText = `${dateString}, ${timeString}`; 
+
+        wrapper.appendChild(msg); 
+        wrapper.appendChild(timeContainer); 
+
+        row.appendChild(avatar); 
+        row.appendChild(wrapper); 
+        chat.appendChild(row);              
+        
+        chat.scrollTop = chat.scrollHeight; 
+        savechat();                                 
+        }
+
+    function ask(){                         
+        const questionInput = document.getElementById("question");
+        const question = questionInput.value.trim();
+        if(!question) return;
+
+        addmessage(question, "user");       
+        questionInput.value = "";
+        
+        const loading = document.createElement("div"); 
+        loading.classList.add("loading");   
+        loading.innerText = "กำลังคิดหาคำตอบ..."; 
+        chat.appendChild(loading);          
+        chat.scrollTop = chat.scrollHeight; 
+
+        fetch("/ask", { 
+            method: "POST",                     
+            headers: {
+                "Content-Type": "application/json" 
+            },
+            body: JSON.stringify({ question: question }) 
+        })
+        .then(res => res.json())            
+        .then(data => {                     
+            loading.remove();               
+            addmessage(data.answer, "bot"); 
+        })
+        .catch((c) => {                     
+            loading.remove();               
+            addmessage("การเชื่อมต่อผิดพลาด...", "bot"); 
+        });
+    }
+
+    const params = new URLSearchParams(window.location.search); 
+    const machine = params.get("machine");    
+    if (machine){                           
+        document.title = "AI ระบบซ่อม-" + machine; 
+    }
+    
+    loadSavedTheme();                       
+    loadchat();                             
+    updateAuthMenu();
+</script>
+</body> 
+</html>

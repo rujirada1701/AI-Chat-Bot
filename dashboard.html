@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Log Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 15px 0;
+        }
+
+        .stat-label {
+            font-size: 0.95em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-subtitle {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h2 {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .top-questions-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .top-questions-container h2 {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .question-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+        }
+
+        .question-item:hover {
+            background-color: #f9f9f9;
+            padding-left: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .question-item:last-child {
+            border-bottom: none;
+        }
+
+        .question-text {
+            flex: 1;
+            font-size: 0.95em;
+            color: #333;
+            word-break: break-word;
+            margin-right: 20px;
+        }
+
+        .question-count {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .source-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .source-badge.web {
+            background-color: #d4f4e6;
+            color: #0d6e4f;
+        }
+
+        .source-badge.unknown {
+            background-color: #ffd6e6;
+            color: #8b1538;
+        }
+
+        .source-badge.test {
+            background-color: #fff4d6;
+            color: #8b6f00;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            color: #d32f2f;
+            text-align: center;
+        }
+
+        .date-range {
+            text-align: center;
+            color: white;
+            font-size: 0.95em;
+            margin-top: 20px;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 2em;
+            }
+
+            .filter-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .filter-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .refresh-btn {
+            background: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Dashboard - Log Analysis</h1>
+            <p>วิเคราะห์ข้อมูลคำถามจากระบบ</p>
+        </header>
+
+        <div id="loading" class="loading">
+            <p>⏳ กำลังโหลดข้อมูล...</p>
+        </div>
+
+        <div id="dashboard" style="display: none;">
+            <div class="filter-container">
+                <div>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">🔍 ตัวกรองข้อมูล</h3>
+                </div>
+                
+                <div style="display: contents;">
+                    <div class="filter-group">
+                        <label>ดูตามรูปแบบ</label>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" onclick="setFilterMode('all')">ทั้งหมด</button>
+                            <button class="filter-btn" onclick="setFilterMode('month')">รายเดือน</button>
+                            <button class="filter-btn" onclick="setFilterMode('day')">รายวัน</button>
+                            <button class="filter-btn" onclick="setFilterMode('custom')">กำหนดเอง</button>
+                        </div>
+                    </div>
+
+                    <div id="month-filter" class="filter-group" style="display: none;">
+                        <label>เลือกเดือน</label>
+                        <select id="month-select" onchange="updateDashboardByMonth()">
+                            <option value="">-- เลือกเดือน --</option>
+                        </select>
+                    </div>
+
+                    <div id="day-filter" class="filter-group" style="display: none;">
+                        <label>เลือกวัน</label>
+                        <input type="date" id="day-date" onchange="updateDashboardByDay()" />
+                    </div>
+
+                    <div id="custom-filter" style="display: none; grid-column: 1 / -1;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: flex-end;">
+                            <div class="filter-group">
+                                <label>วันที่เริ่มต้น</label>
+                                <input type="date" id="start-date" />
+                            </div>
+                            <div class="filter-group">
+                                <label>วันที่สิ้นสุด</label>
+                                <input type="date" id="end-date" />
+                            </div>
+                            <button class="refresh-btn" style="margin-top: 0;" onclick="updateDashboardCustom()">ค้นหา</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">📝 จำนวนคำถาม</div>
+                    <div class="stat-value" id="total-questions">-</div>
+                    <div class="stat-subtitle">ทั้งหมด</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">📱 จากเว็บ</div>
+                    <div class="stat-value" id="source-web">-</div>
+                    <div class="stat-subtitle">จำนวนคำถาม</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">❓ ไม่ระบุแหล่ง</div>
+                    <div class="stat-value" id="source-unknown">-</div>
+                    <div class="stat-subtitle">จำนวนคำถาม</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">🧪 ทดสอบ</div>
+                    <div class="stat-value" id="source-test">-</div>
+                    <div class="stat-subtitle">จำนวนคำถาม</div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h2>📊 แหล่งที่มาของคำถาม</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="sourceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h2>⏰ คำถามตามชั่วโมง</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card" style="margin-bottom: 40px;">
+                <h2>📈 จำนวนคำถามตามวันที่</h2>
+                <div class="chart-wrapper" style="height: 350px;">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="top-questions-container">
+                <h2>🔝 10 อันดับคำถามที่พบบ่อยที่สุด</h2>
+                <div id="top-questions-list"></div>
+            </div>
+
+            <div class="date-range" id="date-range"></div>
+
+            <div style="text-align: center;">
+                <button class="refresh-btn" onclick="loadDashboard()">🔄 รีเฟรช</button>
+            </div>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <p>❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+        </div>
+    </div>
+
+    <script>
+        let charts = {};
+        let allAvailableDates = [];
+        let allAvailableMonths = [];
+        let currentFilterMode = 'all';
+
+        async function loadAvailableDates() {
+            try {
+                const response = await fetch('/api/available-dates');
+                const data = await response.json();
+                allAvailableDates = data.dates || [];
+                allAvailableMonths = data.months || [];
+                
+                populateDateSelectors();
+            } catch (error) {
+                console.error('Error loading available dates:', error);
+            }
+        }
+
+        function populateDateSelectors() {
+            // Populate month selector
+            const monthSelect = document.getElementById('month-select');
+            monthSelect.innerHTML = '<option value="">-- เลือกเดือน --</option>';
+            allAvailableMonths.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                const [year, mon] = month.split('-');
+                const monthName = new Date(year, parseInt(mon) - 1).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+                option.textContent = monthName;
+                monthSelect.appendChild(option);
+            });
+
+            // Set date input constraints
+            const dayDateInput = document.getElementById('day-date');
+            if (allAvailableDates.length > 0) {
+                dayDateInput.min = allAvailableDates[0];
+                dayDateInput.max = allAvailableDates[allAvailableDates.length - 1];
+                dayDateInput.value = allAvailableDates[0];
+            }
+
+            // Set custom filter date inputs min/max
+            if (allAvailableDates.length > 0) {
+                document.getElementById('start-date').min = allAvailableDates[0];
+                document.getElementById('end-date').max = allAvailableDates[allAvailableDates.length - 1];
+                document.getElementById('start-date').value = allAvailableDates[0];
+                document.getElementById('end-date').value = allAvailableDates[allAvailableDates.length - 1];
+            }
+        }
+
+        function setFilterMode(mode) {
+            currentFilterMode = mode;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Hide all filter sections
+            document.getElementById('month-filter').style.display = 'none';
+            document.getElementById('day-filter').style.display = 'none';
+            document.getElementById('custom-filter').style.display = 'none';
+            
+            // Show relevant filter section
+            if (mode === 'month') {
+                document.getElementById('month-filter').style.display = 'block';
+            } else if (mode === 'day') {
+                document.getElementById('day-filter').style.display = 'block';
+            } else if (mode === 'custom') {
+                document.getElementById('custom-filter').style.display = 'block';
+            } else {
+                loadDashboard();
+            }
+        }
+
+        function updateDashboardByMonth() {
+            const month = document.getElementById('month-select').value;
+            if (!month) return;
+            
+            const startDate = month + '-01';
+            const [year, mon] = month.split('-');
+            const lastDay = new Date(year, parseInt(mon), 0).getDate();
+            const endDate = month + '-' + String(lastDay).padStart(2, '0');
+            
+            loadDashboardWithDates(startDate, endDate);
+        }
+
+        function updateDashboardByDay() {
+            const day = document.getElementById('day-date').value;
+            if (!day) return;
+            
+            loadDashboardWithDates(day, day);
+        }
+
+        function updateDashboardCustom() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (!startDate || !endDate) {
+                alert('กรุณาเลือกช่วงวันที่');
+                return;
+            }
+            
+            loadDashboardWithDates(startDate, endDate);
+        }
+
+        async function loadDashboardWithDates(startDate, endDate) {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('dashboard').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+
+                const params = new URLSearchParams();
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+
+                const response = await fetch(`/api/logs-statistics?${params.toString()}`);
+                const stats = await response.json();
+
+                updateStatistics(stats);
+                updateCharts(stats);
+                updateTopQuestions(stats);
+                updateDateRange(stats);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('dashboard').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+
+                const response = await fetch('/api/logs-statistics');
+                const stats = await response.json();
+
+                updateStatistics(stats);
+                updateCharts(stats);
+                updateTopQuestions(stats);
+                updateDateRange(stats);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        function updateStatistics(stats) {
+            document.getElementById('total-questions').textContent = stats.total_questions.toLocaleString('th-TH');
+            document.getElementById('source-web').textContent = (stats.by_source['web'] || 0).toLocaleString('th-TH');
+            document.getElementById('source-unknown').textContent = (stats.by_source['unknown'] || 0).toLocaleString('th-TH');
+            document.getElementById('source-test').textContent = (stats.by_source['test'] || 0).toLocaleString('th-TH');
+        }
+
+        function updateCharts(stats) {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+
+            // Source chart
+            const sourceCtx = document.getElementById('sourceChart').getContext('2d');
+            charts.sourceChart = new Chart(sourceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(stats.by_source),
+                    datasets: [{
+                        data: Object.values(stats.by_source),
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#4facfe'
+                        ],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Hourly chart
+            const hours = Object.keys(stats.by_hour).sort();
+            const hourlyData = hours.map(h => stats.by_hour[h]);
+            
+            const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+            charts.hourlyChart = new Chart(hourlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: hours.map(h => h + ':00'),
+                    datasets: [{
+                        label: 'จำนวนคำถาม',
+                        data: hourlyData,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: '#667eea',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Daily chart
+            const dates = Object.keys(stats.questions_by_date).sort();
+            const dailyData = dates.map(d => stats.questions_by_date[d]);
+            
+            const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+            charts.dailyChart = new Chart(dailyCtx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'จำนวนคำถาม',
+                        data: dailyData,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTopQuestions(stats) {
+            const container = document.getElementById('top-questions-list');
+            container.innerHTML = '';
+
+            stats.top_questions.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'question-item';
+                const questionText = item.question || '(คำถามว่าง)';
+                div.innerHTML = `
+                    <div class="question-text"><strong>#${index + 1}</strong> ${escapeHtml(questionText)}</div>
+                    <div class="question-count">${item.count} ครั้ง</div>
+                `;
+                container.appendChild(div);
+            });
+
+            if (stats.top_questions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">ไม่มีข้อมูล</p>';
+            }
+        }
+
+        function updateDateRange(stats) {
+            if (stats.date_range.start && stats.date_range.end) {
+                const start = new Date(stats.date_range.start).toLocaleDateString('th-TH');
+                const end = new Date(stats.date_range.end).toLocaleDateString('th-TH');
+                document.getElementById('date-range').textContent = `📅 ข้อมูลตั้งแต่ ${start} ถึง ${end}`;
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Load dashboard on page load
+        loadAvailableDates();
+        loadDashboard();
+    </script>
+</body>
+</html>

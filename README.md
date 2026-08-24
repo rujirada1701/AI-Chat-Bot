@@ -1,107 +1,141 @@
-# Local RAG Maintenance Assistant (Ollama + LangChain + Chroma)
+# MT Assistant AI
 
-ระบบถาม-ตอบข้อมูลซ่อมบำรุงเครื่องจักรแบบ Local RAG
+ระบบ AI สำหรับตอบคำถามเกี่ยวกับการซ่อมบำรุงเครื่องจักร โดยค้นหาข้อมูลจากคู่มือในโฟลเดอร์ `manuals/` และใช้ Ollama ทำงานบนเครื่องของผู้ใช้
 
-- ใช้ Ollama รันโมเดลบนเครื่อง
-- ใช้ LangChain เป็น orchestration
-- ใช้ Chroma เป็น vector database
-- รองรับทั้งโหมด Terminal และ Web UI (Streamlit)
-- รองรับหลายไฟล์คู่มือในโฟลเดอร์เดียว (.txt และ .docx)
+## สิ่งที่ต้องติดตั้ง
 
-## Features
+- Python 3.12
+- Ollama
+- โมเดล `bge-m3`
 
-- แยกข้อมูลเป็นเคสด้วยตัวคั่น `=== END===` แบบ strict (1 เคส = 1 chunk)
-- บังคับรูปแบบคำตอบ:
-  - MACHINE
-  - อาการ
-  - สาเหตุ
-  - การแก้ไข
-- รองรับ re-index อัตโนมัติเมื่อไฟล์คู่มือเปลี่ยน
-- รองรับธีมสว่าง/มืดในหน้าเว็บ
+## วิธีติดตั้ง
 
-## Project Structure
+### 1. ติดตั้ง Python 3.12
 
-- `rag_chat_local.py` : แกนหลัก RAG + โหมด Terminal
-- `web_chat_ui.py` : Web UI ด้วย Streamlit
-- `maintenance_log.txt` : ไฟล์คู่มือหลัก
-- `manuals/` : โฟลเดอร์คู่มือเพิ่มเติม (.txt, .docx)
-- `requirements.txt` : รายการ dependencies
+ดาวน์โหลดและติดตั้ง Python 3.12 จาก [python.org](https://www.python.org/downloads/)
 
-## Prerequisites
-
-1. ติดตั้ง Python 3.10+
-2. ติดตั้ง Ollama และรัน service
-3. โหลดโมเดลที่ต้องใช้ เช่น
+ตรวจสอบเวอร์ชัน:
 
 ```bash
-ollama pull llama3.1:8b
-ollama pull nomic-embed-text
+python --version
 ```
 
-## Installation
+ควรแสดงผลเป็น `Python 3.12.x`
 
-```bash
+### 2. ดาวน์โหลดโปรเจกต์
+
+เปิด Terminal หรือ Command Prompt แล้วเข้าไปยังโฟลเดอร์โปรเจกต์:
+
+```bat
+cd path\to\AI-Chat-Bot-main
+```
+
+### 3. สร้าง Virtual Environment
+
+```bat
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+### 4. ติดตั้ง Python packages
+
+```bat
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## Run (Terminal Chat)
+## ติดตั้ง Ollama และโมเดล AI
 
-```bash
-python rag_chat_local.py
+ดาวน์โหลด Ollama จาก [ollama.com/download](https://ollama.com/download) และติดตั้งให้เรียบร้อย
+
+ตรวจสอบว่า Ollama ติดตั้งสำเร็จ:
+
+```bat
+ollama --version
 ```
 
-พิมพ์ `exit` เพื่อออกจากโปรแกรม
+ดาวน์โหลดโมเดล `bge-m3`:
 
-## Run (Web UI)
-
-```bash
-streamlit run web_chat_ui.py
+```bat
+ollama pull bge-m3
 ```
 
-จากนั้นเปิด URL ที่ Streamlit แสดง (เช่น http://localhost:8501)
+ทดสอบโมเดล:
 
-## Data Format
+```bat
+ollama run bge-m3
+```
 
-ตัวอย่างรูปแบบข้อมูลในไฟล์คู่มือ:
+ปิดหน้าทดสอบด้วย `Ctrl+C` แล้วตรวจสอบให้แน่ใจว่า Ollama ยังทำงานอยู่ก่อนเปิดโปรแกรม
+
+## เตรียมคู่มือ
+
+นำไฟล์คู่มือเครื่องจักรนามสกุล `.txt` หรือ `.docx` ไปใส่ไว้ในโฟลเดอร์:
 
 ```text
-=== MACHINE: BROTHER TC-S2A NC ===
-[อาการ]Alarm 5567
-[สาเหตุ]ท่อตัน2
-[การแก้ไข]
-      1.ล้างท่อ2
-      2.ล้างน้ำ
-=== END===
+manuals/
 ```
 
-หมายเหตุสำหรับไฟล์ Word (.docx):
+เมื่อเปิดโปรแกรม ระบบจะอ่านคู่มือและสร้างฐานข้อมูลค้นหาให้อัตโนมัติ
 
-- รองรับไฟล์ `.docx` โดยตรง หากเนื้อหาในเอกสารยังอยู่ในรูปแบบเดียวกับด้านบน
-- แนะนำให้คง token สำคัญให้ตรงเดิม: `=== MACHINE: ... ===`, `[อาการ]`, `[สาเหตุ]`, `[การแก้ไข]`, `=== END===`
+## วิธีใช้งาน
 
-## Notes
+### วิธีที่ 1: รันด้วย `python app.py`
 
-- ถ้าต้องการบังคับ rebuild index ทุกครั้ง:
+ตรวจสอบว่าอยู่ในโฟลเดอร์โปรเจกต์และเปิด Virtual Environment แล้ว จากนั้นรัน:
 
-Windows PowerShell:
-
-```powershell
-$env:FORCE_REBUILD_INDEX = "true"
-python rag_chat_local.py
+```bat
+python app.py
 ```
 
-- ปกติระบบจะ rebuild เฉพาะเมื่อไฟล์คู่มือมีการเปลี่ยนแปลง
+เปิดเว็บไซต์ใน Browser:
 
-## GitHub Upload Suggestion
+```text
+http://localhost:5000/qa
+```
 
-แนะนำ commit เฉพาะไฟล์ซอร์สและข้อมูลคู่มือ:
+หน้า Dashboard อยู่ที่:
 
-- `rag_chat_local.py`
-- `web_chat_ui.py`
-- `requirements.txt`
-- `maintenance_log.txt`
-- `manuals/`
-- `README.md`
-- `.gitignore`
+```text
+http://localhost:5000/dashboard
+```
 
-ไม่ควรอัปไฟล์ environment/ไฟล์ generate ขึ้น repo เช่น `venv11/`, `chroma_db/`, `__pycache__/`
+หยุดโปรแกรมด้วย `Ctrl+C`
+
+### วิธีที่ 2: สร้างและใช้งาน `Run.bat`
+
+สร้างไฟล์ชื่อ `Run.bat` ในโฟลเดอร์เดียวกับ `app.py` แล้วใส่ข้อความนี้:
+
+```bat
+@echo off
+cd /d "%~dp0"
+call .venv\Scripts\activate.bat
+python app.py
+pause
+```
+
+ดับเบิลคลิกไฟล์ `Run.bat` เพื่อเริ่มโปรแกรม จากนั้นเปิด `http://localhost:5000/qa`
+
+ถ้ายังไม่ได้สร้าง Virtual Environment ให้สร้างก่อนด้วยคำสั่ง:
+
+```bat
+python -m venv .venv
+```
+
+แล้วติดตั้ง packages ตามขั้นตอนด้านบน
+
+## การใช้งานหน้าเว็บ
+
+1. เปิด `http://localhost:5000/qa`
+2. พิมพ์ชื่อเครื่องจักร, Alarm หรืออาการที่ต้องการค้นหา
+3. ระบบจะแสดงข้อมูลเครื่อง อาการ สาเหตุ และวิธีแก้ไขจากคู่มือ
+4. หากต้องการเพิ่มคู่มือ ให้ใช้เมนูอัปโหลดในหน้าเว็บ
+
+ระบบรองรับไฟล์ `.txt` และ `.docx` เท่านั้น
+
+## หมายเหตุ
+
+- การเริ่มใช้งานครั้งแรกอาจใช้เวลานาน เนื่องจากระบบต้องสร้างฐานข้อมูลจากคู่มือ
+- ต้องเปิด Ollama ก่อนใช้งานโปรแกรม
+- หากแก้ไขหรือเพิ่มไฟล์ใน `manuals/` ให้ปิดแล้วเปิดโปรแกรมใหม่
+- ข้อมูลคำตอบขึ้นอยู่กับเนื้อหาในคู่มือ ควรตรวจสอบขั้นตอนความปลอดภัยก่อนทำงานกับเครื่องจักรจริง

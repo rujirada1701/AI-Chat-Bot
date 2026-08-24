@@ -1,7 +1,5 @@
-call "C:\Users\veera\Ai chay bot\Chat-Bot-main\Chat-Bot-main\venv12\Scripts\activate"
-
-cd "C:\Users\veera\Ai chay bot\Chat-Bot-main\Chat-Bot-main"
-
+@echo off
+cd /d "%~dp0"
+call .venv\Scripts\activate.bat
 python app.py
-
 pause
